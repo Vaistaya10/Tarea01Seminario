@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reconocimiento imágenes</title>
+
+  <!-- CDN para gestión de objetos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+
+  <!-- CDN para ML -->
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+
+</head>
+<body>
+
+  <script>
+    //PASO 1: Objetos requeridos
+    let classifier;      //A través del modelo el reconocimiento de imágenes
+    let img;             //Referencia al archivo físico JPG
+    let etiqueta = "";   //Texto que describe la imagen identificada
+    let confianza = 0.0; //Valor de confianza (0-1)
+
+    //PASO 2: Método que carga configuraciones generales
+    function preload(){
+      //Referencia al modelo ya entrenado
+      classifier = ml5.imageClassifier("MobileNet");
+      //Referencia al archivo físico
+      img = loadImage("images/animal-03.jpg");
+    }
+
+    //PASO 3: Método que construye objetos
+    function setup(){
+      //Creamos un CANVAS (lienzo donde podemos dibujar) - Ancho, Alto
+      createCanvas(600, 400);
+      //Ejecutar el proceso de clasificación (INPUT, OUTPUT)
+      classifier.classify(img, gotResult);
+      //Permite "pintar"/"renderizar" la imagen (JPG) en el canvas (x1,y1,x2,y2)
+      image(img, 0, 0, width, height);
+    }
+
+    //PASO 4: Método que procesa el resultado (valor obtenido del modelo)
+    function gotResult(results){
+      console.log(results);
+
+      //Gestion de resultados
+      fill(255); //Color de la fuente (blanco) 255,255,255
+      stroke(0); //Borde(0,0,0)
+      textSize(18); //Tamaño fuente
+
+      //confianza en porcentaje
+      const porcentaje = (results[0].confidence * 100).toFixed(2);
+      
+      //Asignando datos en las variables
+      etiqueta = "Animal: " + results[0].label;
+      //confianza = "Confianza: " + nf(results[0].confidence, 0,2);
+      confianza = "Confianza: " + porcentaje + "%";
+      //Mostrar el valor de las variables en el canvas
+      text(etiqueta, 10,360); //text(textomostrar,x,y)
+      text(confianza, 10,380);
+    }
+
+  </script>
+
+</body>
+</html>

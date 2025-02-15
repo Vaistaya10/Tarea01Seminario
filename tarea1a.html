@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reconocimiento de Imágenes</title>
+
+  <!-- CDN de Bootstrap 4 -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- CDN para gestión de objetos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+
+  <!-- CDN para ML -->
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+
+  <style>
+    /* Estilo personalizado */
+    #image-container {
+      text-align: center;
+    }
+    .confidence-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+    }
+    .confidence-fill {
+      height: 100%;
+      background-color: green;
+      text-align: right;
+      padding-right: 10px;
+      color: white;
+      border-radius: 5px;
+    }
+    .container {
+      max-width: 1200px;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-md-8">
+        <!-- Contenedor de imagen principal -->
+        <div id="image-container">
+          <label for="imagen">Imagen principal:</label>
+          <input type="text" class="form-control mb-3" id="imagen" readonly>
+
+          <canvas id="canvas"></canvas>
+
+          <!-- Barra de confianza -->
+          <div class="confidence-bar mt-2">
+            <div class="confidence-fill" style="width: 0%;" id="confidence-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <!-- Botones de selección de imagen -->
+        <div id="buttons" class="d-flex flex-column align-items-center">
+          <a href="javascript:void(0)" onclick="changeImage('images/animal-01.jpg', 'Gato')" class="mb-2">
+            <img src="./images/animal-01.jpg" alt="Animal 1" width="50px" height="50px">
+          </a>
+          <a href="javascript:void(0)" onclick="changeImage('images/animal-02.jpg', 'Perro')" class="mb-2">
+            <img src="./images/animal-02.jpg" alt="Animal 2" width="50px" height="50px">
+          </a>
+          <a href="javascript:void(0)" onclick="changeImage('images/animal-03.jpg', 'Conejo')" class="mb-2">
+            <img src="./images/animal-03.jpg" alt="Animal 3" width="50px" height="50px">
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // PASO 1: Objetos requeridos
+    let classifier;
+    let img;
+    let etiqueta = "";
+    let confianza = 0.0;
+
+    // PASO 2: Método que carga configuraciones generales
+    function preload(){
+      classifier = ml5.imageClassifier("MobileNet");
+      img = loadImage("images/animal-03.jpg");
+    }
+
+    // PASO 3: Método que construye objetos
+    function setup(){
+      createCanvas(600, 400);
+      classifier.classify(img, gotResult);
+      image(img, 0, 0, width, height);
+    }
+
+    // PASO 4: Método que procesa el resultado (valor obtenido del modelo)
+    function gotResult(results){
+      const porcentaje = (results[0].confidence * 100).toFixed(2);
+      
+      etiqueta = "Animal: " + results[0].label;
+      confianza = porcentaje;
+
+      // Actualizamos el valor de confianza en la barra
+      updateConfidenceBar(porcentaje);
+
+      // Mostrar los resultados en la pantalla
+      fill(255);
+      stroke(0);
+      textSize(18);
+      text(etiqueta, 10, 360);
+      text(confianza + "%", 10, 380);
+    }
+
+    // Función para cambiar la imagen y actualizar el nombre en el input
+    function changeImage(imagePath, animalName){
+      img = loadImage(imagePath, function() {
+        classifier.classify(img, gotResult);
+        image(img, 0, 0, width, height);
+      });
+
+      // Actualizar el input con el nombre del animal
+      document.getElementById("imagen").value = animalName;
+    }
+
+    // Función para actualizar la barra de confianza
+    function updateConfidenceBar(value) {
+      const fill = document.getElementById('confidence-fill');
+      fill.style.width = value + '%';
+      fill.innerText = value + '%';
+    }
+  </script>
+
+  <!-- CDN de Bootstrap 4 -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>
