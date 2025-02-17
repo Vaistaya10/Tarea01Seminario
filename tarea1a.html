@@ -95,22 +95,28 @@
     }
 
     // PASO 4: Método que procesa el resultado (valor obtenido del modelo)
-    function gotResult(results){
-      const porcentaje = (results[0].confidence * 100).toFixed(2);
-      
-      etiqueta = "Animal: " + results[0].label;
-      confianza = porcentaje;
-
-      // Actualizamos el valor de confianza en la barra
-      updateConfidenceBar(porcentaje);
-
-      // Mostrar los resultados en la pantalla
-      fill(255);
-      stroke(0);
-      textSize(18);
-      text(etiqueta, 10, 360);
-      text(confianza + "%", 10, 380);
+    function gotResult(results) {
+      if (results.length > 0) {
+        const porcentaje = (results[0].confidence * 100).toFixed(2);
+        
+        etiqueta = results[0].label; // Etiqueta del objeto detectado
+        confianza = porcentaje;
+    
+        // Actualizamos el valor de confianza en la barra
+        updateConfidenceBar(porcentaje);
+    
+        // Mostrar los resultados en la pantalla
+        fill(255);
+        stroke(0);
+        textSize(18);
+        text("Animal: " + etiqueta, 10, 360);
+        text(confianza + "%", 10, 380);
+    
+        // **Actualizar el input con la etiqueta detectada**
+        document.getElementById("imagen").value = etiqueta;
+      }
     }
+    
 
     // Función para cambiar la imagen y actualizar el nombre en el input
     function changeImage(imagePath, animalName){
