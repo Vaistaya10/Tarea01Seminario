@@ -1,71 +1,114 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detección de Pinch - p5.js y ml5.js</title>
-    
-    <!-- CDN para p5.js -->
+    <title>Document</title>
+    <!-- CDN para gestión de objetos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
 
-    <!-- CDN para ml5.js -->
+    <!-- CDN para ML -->
     <script src="https://cdn.jsdelivr.net/npm/ml5@0.12/dist/ml5.min.js"></script>
 </head>
 <body>
-    <div>Detección de Pinch con p5.js y ml5.js</div>
+    <div>Teachable Machine Image Model - p5.js and ml5.js</div>
 
     <script type="text/javascript">
-        let handPose;
-        let video;
-        let hands = [];
+      let classifier;
+      let imageModelURL = './model/';
+      let video;
+      let flippedVideo;
+      let label = "";
+      let results = [];
 
-        function preload() {
-            handPose = ml5.handPose();
+      // Colores para las barras
+      const colors = {
+        'Celular': '#E67701',
+        'Teclado': '#D84C6F',
+        'Mouse': '#794AEF',
+        'Otro': '#3baf6b',  // Color predeterminado si no está en el set
+      };
+
+      function preload() {
+        classifier = ml5.imageClassifier(imageModelURL + 'model.json');
+      }
+
+      function setup() {
+        createCanvas(320, 400);  
+        video = createCapture(VIDEO);
+        video.size(320, 240);  // El video sigue teniendo el tamaño de 320x240
+        video.hide();
+
+        flippedVideo = ml5.flipImage(video);
+        classifyVideo();
+      }
+
+      function draw() {
+        background(0);
+        image(flippedVideo, 0, 0);
+
+        // Dibuja las barras por debajo del video
+        if (results.length > 0) {
+          drawBarGraph(results);
         }
 
-        function setup() {
-            createCanvas(640, 480);
-            video = createCapture(VIDEO);
-            video.size(640, 480);
-            video.hide();
+        fill(0);
+        textSize(16);
+        textAlign(LEFT);
+        
+      }
 
-            // Iniciar detección de manos
-            handPose.detectStart(video, gotHands);
+      function classifyVideo() {
+        flippedVideo = ml5.flipImage(video)
+        classifier.classify(flippedVideo, gotResult);
+      }
+
+      function gotResult(error, resultsArray) {
+        if (error) {
+          console.error(error);
+          return;
         }
 
-        function draw() {
-            // Dibujar el video en el lienzo
-            image(video, 0, 0, width, height);
+        results = resultsArray;
+        label = results[0].label;
 
-            if (hands.length > 0) {
-                let finger = hands[0].index_finger_tip;
-                let thumb = hands[0].thumb_tip;
+        classifyVideo();
+      }
 
-                let centerX = (finger.x + thumb.x) / 2;
-                let centerY = (finger.y + thumb.y) / 2;
-                let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
+      function drawBarGraph(results) {
+  let barHeight = 30;  // La altura de las barras
+  let barSpacing = 10; // El espacio entre las barras
+  let maxWidth = width - 200;  // Max width of the canvas, leaving space for labels and percentage
+  let startingY = 250;  // Starting Y position for the bars
 
-                // Definir color según la distancia (pinch)
-                let color;
-                if (pinch < 30) {
-                    color = [255, 0, 0, 200]; // Rojo (pequeño)
-                } else if (pinch < 60) {
-                    color = [255, 165, 0, 200]; // Naranja (mediano)
-                } else {
-                    color = [255, 255, 0, 200]; // Amarillo (grande)
-                }
+  // Definir el tamaño constante para las barras
+  let barWidth = maxWidth;  // El ancho total de la barra será constante
 
-                // Dibujar el círculo con el color dinámico
-                fill(color);
-                stroke(0);
-                strokeWeight(2);
-                circle(centerX, centerY, pinch);
-            }
-        }
+  for (let i = 0; i < results.length; i++) {
+    let confidence = results[i].confidence;  // El valor de confianza para determinar el llenado de las barras
+    let color = colors[results[i].label] || colors['Otro'];
 
-        function gotHands(results) {
-            hands = results;
-        }
+    // Dibujar la barra con el llenado basado en la confianza
+    fill(color);
+    noStroke();
+    rect(80, startingY + (barHeight + barSpacing) * i, barWidth * confidence, barHeight);
+
+    // Mostrar el porcentaje a la derecha de la barra
+    fill(255);
+    textAlign(LEFT, CENTER);
+    let percentage = (confidence * 100).toFixed(2) + "%";
+    text(percentage, 60 + barWidth + 30, startingY + (barHeight + barSpacing) * i + barHeight / 2);
+
+     // Mostrar la etiqueta a la izquierda de la barra
+     fill(255);
+    textAlign(RIGHT, CENTER);  // Alineamos el texto a la derecha para que esté justo antes de la barra
+    text(results[i].label, + 60, startingY + (barHeight + barSpacing) * i + barHeight / 2);
+  }
+}
+
+//percentage, 30,
+//
+
     </script>
 </body>
 </html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clasificación de Formas</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- CDN para p5.js y ml5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ml5@0.12/dist/ml5.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    canvas {
+      border: 2px solid #000;
+      background-color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container text-center mt-4">
+    <h1 class="mb-4">Clasificación de Formas</h1>
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div id="canvas-container" class="p-3 border rounded bg-white"></div>
+        <button id="clearButton" class="btn btn-danger mt-3">Limpiar</button>
+        <div id="resultsDiv" class="alert alert-info mt-3">Cargando el modelo...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let shapeClassifier;
+    let canvas;
+    let resultsDiv;
+    let inputImage;
+    let clearButton;
+    let lastSpokenLabel = "";
+
+    function setup(){
+      canvas = createCanvas(400, 400);
+      canvas.parent("canvas-container");
+      background(255);
+
+      let options = {
+        inputs: [64, 64, 4],
+        task  : 'imageClassification'
+      };
+
+      shapeClassifier = ml5.neuralNetwork(options);
+
+      const modelDetails = {
+        model: './ModelShape/model.json',
+        metadata: './ModelShape/model_meta.json',
+        weights: './ModelShape/model.weights.bin'
+      };
+
+      clearButton = select("#clearButton");
+      clearButton.mousePressed(() => {
+        background(255);
+        lastSpokenLabel = ""; // Resetear el último valor hablado
+      });
+
+      resultsDiv = select("#resultsDiv");
+      inputImage = createGraphics(64, 64);
+      shapeClassifier.load(modelDetails, modelLoaded);
+    }
+
+    function modelLoaded(){
+      console.log("Modelo listo");
+      classifyImage();
+    }
+
+    function classifyImage(){
+      inputImage.copy(canvas, 0, 0, 400, 400, 0, 0, 64, 64);
+      shapeClassifier.classify({image: inputImage}, goResults);
+    }
+
+    function goResults(err, result){
+      if (err){
+        console.error("No pudimos verificar el objeto");
+        return;
+      }
+      let etiqueta = result[0].label;
+      let confianza = (result[0].confidence * 100).toFixed(2);
+      resultsDiv.html(`Etiqueta: <strong>${etiqueta}</strong> - Confianza: <strong>${confianza}%</strong>`);
+      
+      if (confianza > 75 && etiqueta !== lastSpokenLabel) {
+        lastSpokenLabel = etiqueta;
+        speak(etiqueta);
+      }
+      classifyImage();
+    }
+
+    function speak(text) {
+      let speech = new SpeechSynthesisUtterance(text);
+      speech.lang = "es-ES";
+      window.speechSynthesis.speak(speech);
+    }
+
+    function draw(){
+      if(mouseIsPressed){
+        strokeWeight(8);
+        stroke(0);
+        line(mouseX, mouseY, pmouseX, pmouseY);
+      }
+    }
+  </script>
+</body>
+</html>
